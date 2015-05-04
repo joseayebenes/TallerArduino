@@ -1,5 +1,7 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
+#include <OneWire.h> 
+#include <DallasTemperature.h>
 
 //VARIABLES SERIAL
 String inputString = "";         
@@ -13,6 +15,12 @@ static const int RXPin = 3, TXPin = 2;
 TinyGPSPlus gps;
 SoftwareSerial GPSSerial(RXPin, TXPin);
 
+//VARIABLES TEMPERATURA
+#define Pin 12 
+OneWire ourWire(Pin); 
+DallasTemperature sensors(&ourWire); 
+ 
+ 
 void setup() {
   Serial.begin(9600);
   GPSSerial.begin(9600);
@@ -20,6 +28,7 @@ void setup() {
   inputString.reserve(50);
   pinMode(echoPin,INPUT);
   pinMode(trigPin,OUTPUT);
+  sensors.begin(); 
 }
 
 void loop() {
@@ -32,6 +41,7 @@ void loop() {
   if (GPSSerial.available() > 0){
     gps.encode(GPSSerial.read());
   }
+
 }
 
 void serialEvent() {
@@ -40,7 +50,8 @@ void serialEvent() {
     inputString += inChar;
     if (inChar == '\n') {
       stringComplete = true;
-  }  
+    }  
+  }
 }
   
 void procesarComando(){
@@ -49,7 +60,6 @@ void procesarComando(){
   switch(comando){
     case 'w':
       Serial.print("comando W  ");
-      
     break;
     case 's':
       Serial.println("comando S");
@@ -59,6 +69,18 @@ void procesarComando(){
     break;
     case 'd':
       Serial.println("comando D");
+    break;
+    case 'l':
+      Serial.println("comando l");
+      leerDistancia();
+    break;
+    case 'p':
+      Serial.println("comando p");
+      displayInfo();
+    break;
+    case 't':
+      Serial.println("comando t");
+      leerTemperatura();
     break;
   }
   
@@ -115,16 +137,22 @@ void displayInfo()
 
 void leerDistancia(){
   long tiempo;
-  float distancia;
+  long distancia;
   digitalWrite(trigPin,LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH); 
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  tiempo=pulseIn(echoPin, HIGH);
   
-  distancia= int(0.017*tiempo);
+  tiempo=pulseIn(echoPin, HIGH);
+  distancia= tiempo/58;
   Serial.println("Distancia ");
   Serial.println(distancia);
   Serial.println(" cm");
+}
+
+void leerTemperatura(){
+  sensors.requestTemperatures(); 
+  Serial.print(sensors.getTempCByIndex(0)); 
+  Serial.println(" grados Centigrados");
 }
