@@ -1,11 +1,10 @@
-#include <TinyGPS++.h>
-#include <SoftwareSerial.h>
-#include <OneWire.h> 
-#include <DallasTemperature.h>
+#include <TinyGPS++.h> //Librería GPS
+#include <SoftwareSerial.h> //Crear Puerto Serie
+#include <OneWire.h>  //Comunicación con Sensor Temperatura
+#include <DallasTemperature.h> //Para leer Temperatura
 
-//VARIABLES SERIAL
-String inputString = "";         
-boolean stringComplete = false; 
+// VARIABLES SERIAL
+char comando;
 
 //VARIABLES ULTRASONIDOS
 static const int echoPin=10, trigPin=11;
@@ -16,70 +15,61 @@ TinyGPSPlus gps;
 SoftwareSerial GPSSerial(RXPin, TXPin);
 
 //VARIABLES TEMPERATURA
-#define Pin 12 
+static const int Pin =12; 
 OneWire ourWire(Pin); 
 DallasTemperature sensors(&ourWire); 
  
  
 void setup() {
   Serial.begin(9600);
+  
   GPSSerial.begin(9600);
+  
   pinMode(13,OUTPUT);
-  inputString.reserve(50);
+  
   pinMode(echoPin,INPUT);
   pinMode(trigPin,OUTPUT);
+  
   sensors.begin(); 
 }
 
 void loop() {
-  if (stringComplete) {
+  if(Serial.available()>0){
+    comando=Serial.read();
     procesarComando();
-    inputString = "";
-    stringComplete = false;
   }
-  
   if (GPSSerial.available() > 0){
     gps.encode(GPSSerial.read());
   }
 
 }
 
-void serialEvent() {
-  while (Serial.available()) {
-    char inChar = (char)Serial.read();
-    inputString += inChar;
-    if (inChar == '\n') {
-      stringComplete = true;
-    }  
-  }
-}
   
 void procesarComando(){
-  
-  char comando=inputString[0];
   switch(comando){
     case 'w':
-      Serial.print("comando W  ");
+      Serial.println("Avanzar 500 ms");
+      
     break;
     case 's':
-      Serial.println("comando S");
+      Serial.println("Atras 500 ms");
     break;
     case 'a':
-      Serial.println("comando A");
+      Serial.println("Izquierda 500 ms");
     break;
     case 'd':
-      Serial.println("comando D");
+      Serial.println("Derecha 500 ms");
     break;
     case 'l':
-      Serial.println("comando l");
+      Serial.println("Leer Distancia");
       leerDistancia();
     break;
     case 'p':
-      Serial.println("comando p");
+      Serial.println("Leer Posicion");
       displayInfo();
     break;
     case 't':
-      Serial.println("comando t");
+      Serial.println("Leer Temperatura");
       leerTemperatura();
     break;
   }
