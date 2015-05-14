@@ -67,7 +67,7 @@ void leerDistancia(){
   digitalWrite(trigPin, LOW);
   
   tiempo=pulseIn(echoPin, HIGH);
-  distancia= tiempo/58;
+  distancia= tiempo*0.0001657;
   Serial.println("Distancia ");
   Serial.println(distancia);
   Serial.println(" cm");
