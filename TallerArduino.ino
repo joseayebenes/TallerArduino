@@ -34,27 +34,10 @@ void loop() {
 void procesarComando(){
   switch(comando){
     case 'w':
-      Serial.println("Avanzar");
+      
     break;
-    case 's':
-      Serial.println("Atras");
-    break;
-    case 'a':
-      Serial.println("Izquierda");
-    break;
-    case 'd':
-      Serial.println("Derecha");
-    break;
-    case 'l':
-      Serial.println("Leer Distancia");
-      leerDistancia();
-    break;
-    case 't':
-      Serial.println("Leer Temperatura");
-      leerTemperatura();
-    break;
-  }
-  
+    // TODOS LOS COMANDOS QUE NECESITES
+  }  
 }
 
 void leerDistancia(){
