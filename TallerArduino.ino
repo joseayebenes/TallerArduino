@@ -22,7 +22,7 @@ void setup() {
   
   sensors.begin(); //Inicializa el sensor temperatura
   
-  //CONFIGURAR NOMBRE BLUETOOTH
+  //CONFIGURAR NOMBRE BLUETOOTH <=> PIN de emparejamiento => 1234
    Serial.print("AT+NAME"); 
    Serial.print("miBluetooth"); //Este es el nombre
    delay(1000);
