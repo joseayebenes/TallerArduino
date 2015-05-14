@@ -21,6 +21,12 @@ void setup() {
   pinMode(trigPin,OUTPUT);
   
   sensors.begin(); //Inicializa el sensor temperatura
+  
+  //CONFIGURAR NOMBRE BLUETOOTH
+   Serial.print("AT+NAME"); 
+   Serial.print("miBluetooth"); //Este es el nombre
+   delay(1000);
+ 
 }
 
 void loop() {
