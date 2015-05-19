@@ -3,6 +3,7 @@
 
 // VARIABLES SERIAL
 char comando;
+bool avanzando=false;
 
 //VARIABLES ULTRASONIDOS
 static const int echoPin=12, trigPin=11;
@@ -16,9 +17,21 @@ SoftwareSerial GPSSerial(RXPin, TXPin);
 static const int ENAPin=5, IN1Pin=7, IN2Pin=6, IN3Pin=8, IN4Pin=9, ENBPin=10;
 
 //VARIABLES ENCODER
-static const int EDPin=4, EIPin=13;
+static const int EDPin=1, EIPin=0;
+//Variables Control Velocidad
 int velD=40, velI=40;
-
+int valI;
+int valD;
+long lastI=0;
+long lastD=0;
+int statI=LOW;
+int statD=LOW;
+int stat2I;
+int stat2D;
+int contarI=0;
+int contarD=0;
+int sens=75;
+int last=0;
 
 void setup() {
   //Configuramos el Serial Bluetooth
@@ -45,10 +58,6 @@ void setup() {
   digitalWrite(IN3Pin,HIGH);
   digitalWrite(IN4Pin,LOW);
   
-  //Configuramos los Encoder
-  
-  pinMode(EDPin,INPUT);
-  pinMode(EIPin,INPUT);
 }
 
 void loop() {
@@ -60,14 +69,9 @@ void loop() {
     gps.encode(GPSSerial.read());
     //Serial.write(GPSSerial.read());
   }
-  /*if(comando=='w'){
-    
-    if(leerDistancia()<20){
-      digitalWrite(ENAPin,LOW);
-      digitalWrite(ENBPin,LOW);
-      Serial.println("CHOQUE");
-    }
-  }*/
+  if(avanzando){ 
+    controlarAvance();
+  }
 }
 
   
@@ -79,12 +83,15 @@ void procesarComando(){
       delay(20);
       analogWrite(ENAPin,velD);
       analogWrite(ENBPin,velI);
+      avanzando=true;
     break;
     case 's':
       digitalWrite(ENAPin,LOW);
       digitalWrite(ENBPin,LOW);
+      avanzando=false;
     break;
     case 'a':
+      avanzando=false;
       digitalWrite(ENBPin,LOW);
       digitalWrite(ENAPin,HIGH);
       delay(7);
@@ -92,6 +99,7 @@ void procesarComando(){
       
     break;
     case 'd':
+      avanzando=false;
       digitalWrite(ENAPin,LOW);
       digitalWrite(ENBPin,HIGH);
       delay(7);
@@ -175,5 +183,49 @@ float leerDistancia(){
   distancia= tiempo*0.017;
   
   return distancia;
+}
+
+
+void controlarAvance(){
+  
+  valI=analogRead(0);
+  if(valI<sens)
+    statI=LOW;
+   else
+    statI=HIGH;
+
+   if(stat2I!=statI){  //counts when the state change, thats from (dark to light) or 
+                     //from (light to dark), remmember that IR light is invisible for us.
+     contarI++;
+     stat2I=statI;
+   }
+   
+   valD=analogRead(1);
+  if(valD<sens)
+    statD=LOW;
+   else
+    statD=HIGH;
+
+   if(stat2D!=statD){  //counts when the state change, thats from (dark to light) or 
+                     //from (light to dark), remmember that IR light is invisible for us.
+     contarD++;
+     stat2D=statD;
+   }
+     
+    if(millis()-last>=1){
+      if(contarD>contarI){
+        if(velD>0){velD--;}
+      }else{
+        if(contarD<contarI){
+           if(velD<100){velD++;}
+        }
+      }
+      analogWrite(ENAPin,velD);
+      contarI=0;
+      contarD=0;
+      last=millis();
+   }
+   
+  
 }
 
