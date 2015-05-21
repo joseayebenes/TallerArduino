@@ -156,7 +156,7 @@ void controlarAvance(){ //Función encargada para que vaya recto
      stat2D=statD;
    }
      
-    if(millis()-last>=20){
+    if(millis()-last>=30){
       if(contarD>contarI){
         if(velD>0){velD--;}
       }else{
