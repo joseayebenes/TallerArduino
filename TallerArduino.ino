@@ -3,7 +3,7 @@
 
 // VARIABLES SERIAL
 char comando;
-bool avanzando=false;
+
 
 //VARIABLES ULTRASONIDOS
 static const int echoPin=12, trigPin=11;
@@ -17,25 +17,25 @@ SoftwareSerial GPSSerial(RXPin, TXPin);
 static const int ENAPin=5, IN1Pin=7, IN2Pin=6, IN3Pin=8, IN4Pin=9, ENBPin=10;
 
 //VARIABLES ENCODER
-static const int EDPin=1, EIPin=0;
+static const int EDPin=1, EIPin=0; //ESTOS PINES SON ANALÓGICOS
+
 //Variables Control Velocidad
-int velD=40, velI=40;
-int valI;
-int valD;
-long lastI=0;
-long lastD=0;
-int statI=LOW;
-int statD=LOW;
-int stat2I;
-int stat2D;
-int contarI=0;
-int contarD=0;
-int sens=75;
+int velD=40, velI=40; //Velocidad Actual para el analogWrite(ENAPin,velD) y analogWrite(ENBPin,velI)
+int valI,valD;  //variables donde leer el valor de los pines analógicos
+int statI=LOW,statD=LOW; //estado actual de los encoder
+int stat2I, stat2D; //Estado anterior de los encoder
+int contarI=0, contarD=0; //Cuentador el número de agujero
+int sens=75; //Umbral entre 1 y 0
 int last=0;
 
+
+bool avanzando=false; //Cuando este avanzando adelante tiene que estar a true
+
+
 void setup() {
-  //Configuramos el Serial Bluetooth
+  //Configuramos el Serial CableUSB/Bluetooth
   Serial.begin(9600);
+  
   //Configuramos el Serial del GPS
   GPSSerial.begin(9600);
   
@@ -50,10 +50,14 @@ void setup() {
   pinMode(IN3Pin, OUTPUT);
   pinMode(IN4Pin, OUTPUT);
   pinMode(ENBPin, OUTPUT);
+ 
+  
   //INICIALIZAMOS LOS MOTORES
+  //Inhabilitamos los motores
   digitalWrite(ENAPin,LOW);
   digitalWrite(ENBPin,LOW);
-  digitalWrite(IN1Pin,HIGH);
+  // Configuramos los motores para avanzar adelante
+  digitalWrite(IN1Pin,HIGH); 
   digitalWrite(IN2Pin,LOW);
   digitalWrite(IN3Pin,HIGH);
   digitalWrite(IN4Pin,LOW);
@@ -67,15 +71,16 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available()>0){
-    comando=Serial.read();
-    procesarComando();
+  
+  if(Serial.available()>0){ //Si hay datos en el puerto Serie
+    comando=Serial.read(); //Leemos el dato
+    procesarComando(); //Procesamos el dato
   }
-  if (GPSSerial.available() > 0){
-    gps.encode(GPSSerial.read());
+  if (GPSSerial.available() > 0){ //Si hay datos en el Software Serie del GPS
+  gps.encode(GPSSerial.read());
   }
-  if(avanzando){ 
-    controlarAvance();
+  if(avanzando){  // Si "avanzando" es igual a true
+    controlarAvance(); //controlamos el avance para que vaya recto
   }
 }
 
@@ -84,21 +89,27 @@ void procesarComando(){
   switch(comando){
     case 'w':
       // AVANZAR
+      // Ponemos los motores en marcha y ponemos a true la variable "avanzando"
     break;
     case 's':
       // PARAR
+      // Paramos los motores y ponemos la variable "avanzando" a false
     break;
     case 'a':
-      // GIRAR IZQUIERDA      
+      // GIRAR IZQUIERDA 
+      // Activamos el motor necesario y ponemos la variable "avanzando" a false      
     break;
     case 'd':
       // GIRAR DERECHA
+      // Activamos el motor necesario y ponemos la variable "avanzando" a false 
     break;
     case 'l':
       // LEER y MOSTRAR DISTANCIA
+      // Llamamos a la función leerDistancia() y lo mostramos por Serie
       break;
     case 'p':
       // LEER y MOSTRAR POSICION GPS
+      // Llamamos a la función displayInfoGPS();
       break;   
     default:
        Serial.println("Comando Desconocido");
@@ -106,7 +117,7 @@ void procesarComando(){
   
 }
 
-void displayInfo()
+void displayInfoGPS()
 {
   // LLAMAR A FUNCIONES DE LA LIBRERIA Y MOSTRAR POR PANTALLA
   // LATITUD, LONGITUD, ALTITUD, HORA, FECHA, VELOCIDAD
@@ -120,7 +131,8 @@ float leerDistancia(){
 }
 
 
-void controlarAvance(){
+void controlarAvance(){ //Función encargada para que vaya recto
+//Puedes preguntar por si te interesa como funciona y modificarla
   
   valI=analogRead(EIPin);
   if(valI<sens)
