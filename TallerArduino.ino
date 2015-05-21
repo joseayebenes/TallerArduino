@@ -121,7 +121,7 @@ void displayInfoGPS()
 {
   // LLAMAR A FUNCIONES DE LA LIBRERIA Y MOSTRAR POR PANTALLA
   // LATITUD, LONGITUD, ALTITUD, HORA, FECHA, VELOCIDAD
-  Serial.print(F("Localizacion: ")); 
+  Serial.print(F("Location: ")); 
   if (gps.location.isValid())
   {
     Serial.print(gps.location.lat(), 6);
@@ -132,6 +132,40 @@ void displayInfoGPS()
   {
     Serial.print(F("INVALID"));
   }
+  Serial.print(F("  Date/Time: "));
+  if (gps.date.isValid())
+  {
+    Serial.print(gps.date.month());
+    Serial.print(F("/"));
+    Serial.print(gps.date.day());
+    Serial.print(F("/"));
+    Serial.print(gps.date.year());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+  Serial.print(F(" "));
+  if (gps.time.isValid())
+  {
+    if (gps.time.hour() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.hour());
+    Serial.print(F(":"));
+    if (gps.time.minute() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.minute());
+    Serial.print(F(":"));
+    if (gps.time.second() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.second());
+    Serial.print(F("."));
+    if (gps.time.centisecond() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.centisecond());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.println();
   
 }
 float leerDistancia(){
