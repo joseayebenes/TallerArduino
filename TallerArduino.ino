@@ -3,7 +3,7 @@
 
 // VARIABLES SERIAL
 char comando;
-
+bool avanzando=false;
 
 //VARIABLES ULTRASONIDOS
 static const int echoPin=12, trigPin=11;
@@ -17,25 +17,25 @@ SoftwareSerial GPSSerial(RXPin, TXPin);
 static const int ENAPin=5, IN1Pin=7, IN2Pin=6, IN3Pin=8, IN4Pin=9, ENBPin=10;
 
 //VARIABLES ENCODER
-static const int EDPin=1, EIPin=0; //ESTOS PINES SON ANALÓGICOS
-
+static const int EDPin=1, EIPin=0;
 //Variables Control Velocidad
-int velD=40, velI=40; //Velocidad Actual para el analogWrite(ENAPin,velD) y analogWrite(ENBPin,velI)
-int valI,valD;  //variables donde leer el valor de los pines analógicos
-int statI=LOW,statD=LOW; //estado actual de los encoder
-int stat2I, stat2D; //Estado anterior de los encoder
-int contarI=0, contarD=0; //Cuentador el número de agujero
-int sens=75; //Umbral entre 1 y 0
+int velD=40, velI=40;
+int valI;
+int valD;
+long lastI=0;
+long lastD=0;
+int statI=LOW;
+int statD=LOW;
+int stat2I;
+int stat2D;
+int contarI=0;
+int contarD=0;
+int sens=75;
 int last=0;
 
-
-bool avanzando=false; //Cuando este avanzando adelante tiene que estar a true
-
-
 void setup() {
-  //Configuramos el Serial CableUSB/Bluetooth
+  //Configuramos el Serial Bluetooth
   Serial.begin(9600);
-  
   //Configuramos el Serial del GPS
   GPSSerial.begin(9600);
   
@@ -50,37 +50,27 @@ void setup() {
   pinMode(IN3Pin, OUTPUT);
   pinMode(IN4Pin, OUTPUT);
   pinMode(ENBPin, OUTPUT);
- 
   
-  //INICIALIZAMOS LOS MOTORES
-  //Inhabilitamos los motores
   digitalWrite(ENAPin,LOW);
   digitalWrite(ENBPin,LOW);
-  // Configuramos los motores para avanzar adelante
-  digitalWrite(IN1Pin,HIGH); 
+  digitalWrite(IN1Pin,HIGH);
   digitalWrite(IN2Pin,LOW);
   digitalWrite(IN3Pin,HIGH);
   digitalWrite(IN4Pin,LOW);
   
-  
-  //CONFIGURAR NOMBRE BLUETOOTH <=> PIN de emparejamiento => 1234
-   Serial.print("AT+NAME"); 
-   Serial.print("Bluetooth5"); //Este es el nombre cambiar 5 por el número de vuestro kit
-   delay(1000);
-  
 }
 
 void loop() {
-  
-  if(Serial.available()>0){ //Si hay datos en el puerto Serie
-    comando=Serial.read(); //Leemos el dato
-    procesarComando(); //Procesamos el dato
+  if(Serial.available()>0){
+    comando=Serial.read();
+    procesarComando();
   }
-  if (GPSSerial.available() > 0){ //Si hay datos en el Software Serie del GPS
-  gps.encode(GPSSerial.read());
+  if (GPSSerial.available() > 0){
+    gps.encode(GPSSerial.read());
+    //Serial.write(GPSSerial.read());
   }
-  if(avanzando){  // Si "avanzando" es igual a true
-    controlarAvance(); //controlamos el avance para que vaya recto
+  if(avanzando){ 
+    controlarAvance();
   }
 }
 
@@ -88,39 +78,47 @@ void loop() {
 void procesarComando(){
   switch(comando){
     case 'w':
-      // AVANZAR
-      // Ponemos los motores en marcha y ponemos a true la variable "avanzando"
+      digitalWrite(ENAPin,HIGH);
+      digitalWrite(ENBPin,HIGH);
+      delay(20);
+      analogWrite(ENAPin,velD);
+      analogWrite(ENBPin,velI);
+      avanzando=true;
     break;
     case 's':
-      // PARAR
-      // Paramos los motores y ponemos la variable "avanzando" a false
+      digitalWrite(ENAPin,LOW);
+      digitalWrite(ENBPin,LOW);
+      avanzando=false;
     break;
     case 'a':
-      // GIRAR IZQUIERDA 
-      // Activamos el motor necesario y ponemos la variable "avanzando" a false      
+      avanzando=false;
+      digitalWrite(ENBPin,LOW);
+      digitalWrite(ENAPin,HIGH);
+      delay(7);
+      analogWrite(ENAPin,velD);
+      
     break;
     case 'd':
-      // GIRAR DERECHA
-      // Activamos el motor necesario y ponemos la variable "avanzando" a false 
+      avanzando=false;
+      digitalWrite(ENAPin,LOW);
+      digitalWrite(ENBPin,HIGH);
+      delay(7);
+      analogWrite(ENBPin,velI);
     break;
     case 'l':
-      // LEER y MOSTRAR DISTANCIA
-      // Llamamos a la función leerDistancia() y lo mostramos por Serie
-      break;
+      Serial.println(leerDistancia());
+    break;
     case 'p':
-      // LEER y MOSTRAR POSICION GPS
-      // Llamamos a la función displayInfoGPS();
-      break;   
+      displayInfo();
+    break;   
     default:
        Serial.println("Comando Desconocido");
   }
   
 }
 
-void displayInfoGPS()
+void displayInfo()
 {
-  // LLAMAR A FUNCIONES DE LA LIBRERIA Y MOSTRAR POR PANTALLA
-  // LATITUD, LONGITUD, ALTITUD, HORA, FECHA, VELOCIDAD
   Serial.print(F("Location: ")); 
   if (gps.location.isValid())
   {
@@ -166,43 +164,55 @@ void displayInfoGPS()
   }
 
   Serial.println();
-  
 }
+
 float leerDistancia(){
-  float distancia=0;
+  float tiempo;
+  float distancia;
+  digitalWrite(trigPin,LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH); 
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
   
-  //CALCULAR DISTANCIA
+  tiempo=pulseIn(echoPin, HIGH, 8000);
+  
+  if(tiempo ==8000){
+    return 555;
+  }
+  distancia= tiempo*0.017;
   
   return distancia;
 }
 
 
-void controlarAvance(){ //Función encargada para que vaya recto
-//Puedes preguntar por si te interesa como funciona y modificarla
+void controlarAvance(){
   
-  valI=analogRead(EIPin);
+  valI=analogRead(0);
   if(valI<sens)
     statI=LOW;
    else
     statI=HIGH;
 
-   if(stat2I!=statI){  
+   if(stat2I!=statI){  //counts when the state change, thats from (dark to light) or 
+                     //from (light to dark), remmember that IR light is invisible for us.
      contarI++;
      stat2I=statI;
    }
    
-   valD=analogRead(EDPin);
+   valD=analogRead(1);
   if(valD<sens)
     statD=LOW;
    else
     statD=HIGH;
 
-   if(stat2D!=statD){  
+   if(stat2D!=statD){  //counts when the state change, thats from (dark to light) or 
+                     //from (light to dark), remmember that IR light is invisible for us.
      contarD++;
      stat2D=statD;
    }
      
-    if(millis()-last>=30){
+    if(millis()-last>=1){
       if(contarD>contarI){
         if(velD>0){velD--;}
       }else{
