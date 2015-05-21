@@ -121,6 +121,18 @@ void displayInfoGPS()
 {
   // LLAMAR A FUNCIONES DE LA LIBRERIA Y MOSTRAR POR PANTALLA
   // LATITUD, LONGITUD, ALTITUD, HORA, FECHA, VELOCIDAD
+  Serial.print(F("Localizacion: ")); 
+  if (gps.location.isValid())
+  {
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+  
 }
 float leerDistancia(){
   float distancia=0;
