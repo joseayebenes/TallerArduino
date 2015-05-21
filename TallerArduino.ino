@@ -58,6 +58,12 @@ void setup() {
   digitalWrite(IN3Pin,HIGH);
   digitalWrite(IN4Pin,LOW);
   
+  
+  //CONFIGURAR NOMBRE BLUETOOTH <=> PIN de emparejamiento => 1234
+   Serial.print("AT+NAME"); 
+   Serial.print("Bluetooth5"); //Este es el nombre cambiar 5 por el número de vuestro kit
+   delay(1000);
+  
 }
 
 void loop() {
@@ -67,7 +73,6 @@ void loop() {
   }
   if (GPSSerial.available() > 0){
     gps.encode(GPSSerial.read());
-    //Serial.write(GPSSerial.read());
   }
   if(avanzando){ 
     controlarAvance();
